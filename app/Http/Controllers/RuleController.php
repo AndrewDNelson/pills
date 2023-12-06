@@ -28,10 +28,6 @@ class RuleController extends Controller
             'region'  => env('AWS_DEFAULT_REGION'),  // e.g., 'us-west-2'
             'version' => 'latest',
             'endpoint' => 'https://a3g64zddycx1fg-ats.iot.us-west-2.amazonaws.com',
-            'credentials' => [
-                'key'    => env('AWS_ACCESS_KEY_ID'),
-                'secret' => env('AWS_SECRET_ACCESS_KEY'),
-            ],
         ]);
 
         // The state to set
