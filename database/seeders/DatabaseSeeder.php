@@ -18,5 +18,9 @@ class DatabaseSeeder extends Seeder
         //     'name' => 'Test User',
         //     'email' => 'test@example.com',
         // ]);
+
+        \App\Models\Rule::factory(10)->create()->each(function ($rule) {
+            $rule->schedules()->saveMany(\App\Models\Schedule::factory(3)->make());
+        });
     }
 }
