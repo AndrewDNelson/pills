@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Rule;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
+use Aws\Exception\AwsException;
 use Aws\IotDataPlane\IotDataPlaneClient;
 
 class RuleController extends Controller
@@ -12,32 +13,44 @@ class RuleController extends Controller
 
     private function updateShadow()
     {
-        // Create a client
-        $client = new IotDataPlaneClient([
-            'region'  => env('AWS_DEFAULT_REGION'),
+
+        // Prepare schedules for the shadow
+        $schedules = Schedule::all(); // Replace 'Schedule' with your actual model name
+        $formattedSchedules = $schedules->map(function ($schedule) {
+            return [
+                'day' => $schedule->day,
+                'time' => $schedule->time,
+                'pillCount' => $schedule->rule->pills
+            ];
+        })->toArray();
+
+        $iotDataPlaneClient = new IotDataPlaneClient([
+            'region'  => env('AWS_DEFAULT_REGION'),  // e.g., 'us-west-2'
+            'version' => 'latest',
+            'endpoint' => 'https://a3g64zddycx1fg-ats.iot.us-west-2.amazonaws.com',
             'credentials' => [
                 'key'    => env('AWS_ACCESS_KEY_ID'),
                 'secret' => env('AWS_SECRET_ACCESS_KEY'),
             ],
-            'version' => 'latest',
-            'endpoint' => 'https://data.iot.' . env('AWS_DEFAULT_REGION') . '.amazonaws.com',
         ]);
-
-        // The name of the thing
-        $thingName = 'PillThing';
 
         // The state to set
         $state = [
             'desired' => [
-                'led' => ['onboard' => 1],
+                'led' => ['onboard' => 0],
+                'schedule' => $formattedSchedules,
+                "schedules"=> []
             ],
         ];
 
-        // Update the thing shadow
-        $result = $client->updateThingShadow([
-            'thingName' => $thingName,
-            'payload' => json_encode(['state' => $state]),
-        ]);
+        try {
+            $result = $iotDataPlaneClient->updateThingShadow([
+                'thingName'  => 'PillThing',
+                'payload' => json_encode(['state' => $state]),
+            ]);
+        } catch (AwsException $e) {
+            ray($e->getMessage());
+        }
 
         // The result contains the new state of the thing shadow
         // $newState = json_decode($result->get('payload'));
@@ -87,7 +100,7 @@ class RuleController extends Controller
             ]);
         }
 
-        // $this->updateShadow();
+        $this->updateShadow();
 
         return redirect()->route('rules.index');
     }
@@ -142,7 +155,7 @@ class RuleController extends Controller
             }
         }
 
-        // $this->updateShadow();
+        $this->updateShadow();
     
         return redirect()->route('rules.index');
     }

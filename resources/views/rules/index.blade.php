@@ -14,7 +14,7 @@
                     </x-primary-link>
                 </div>
                 <div class="">
-                    @foreach ($rules as $rule)
+                    @foreach ($rules->sortBy('time') as $rule)
                         <div class="flex justify-between items-center mb-4 p-4 bg-white shadow rounded-lg">
                             <div>
                                 <div class="flex items-end gap-3">
