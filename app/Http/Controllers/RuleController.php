@@ -13,7 +13,7 @@ class RuleController extends Controller
      */
     public function index()
     {
-        return view('rules.index');
+        return view('rules.index', ['rules' => Rule::all()]);
     }
 
     /**
@@ -80,6 +80,12 @@ class RuleController extends Controller
      */
     public function destroy(Rule $rule)
     {
-        //
+        $rule->schedules()->each(function ($schedule) {
+            $schedule->delete();
+        });
+    
+        $rule->delete();
+    
+        return redirect()->route('rules.index');
     }
 }
