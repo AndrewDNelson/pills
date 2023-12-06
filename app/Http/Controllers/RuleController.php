@@ -5,9 +5,46 @@ namespace App\Http\Controllers;
 use App\Models\Rule;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
+use Aws\IotDataPlane\IotDataPlaneClient;
 
 class RuleController extends Controller
 {
+
+    private function updateShadow()
+    {
+        // Create a client
+        $client = new IotDataPlaneClient([
+            'region'  => env('AWS_DEFAULT_REGION'),
+            'credentials' => [
+                'key'    => env('AWS_ACCESS_KEY_ID'),
+                'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            ],
+            'version' => 'latest',
+            'endpoint' => 'https://data.iot.' . env('AWS_DEFAULT_REGION') . '.amazonaws.com',
+        ]);
+
+        // The name of the thing
+        $thingName = 'PillThing';
+
+        // The state to set
+        $state = [
+            'desired' => [
+                'led' => ['onboard' => 1],
+            ],
+        ];
+
+        // Update the thing shadow
+        $result = $client->updateThingShadow([
+            'thingName' => $thingName,
+            'payload' => json_encode(['state' => $state]),
+        ]);
+
+        // The result contains the new state of the thing shadow
+        // $newState = json_decode($result->get('payload'));
+
+        // return response()->json($newState);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -31,7 +68,7 @@ class RuleController extends Controller
     {
 
         $attributes = $request->validate([
-            'pills' => 'required|integer|min:0|max:5',
+            'pills' => 'required|integer|min:1|max:5',
             'days_of_week' => 'required|array|min:1|max:7',
             'time' => 'required|date_format:H:i',
         ]);
@@ -50,6 +87,8 @@ class RuleController extends Controller
             ]);
         }
 
+        // $this->updateShadow();
+
         return redirect()->route('rules.index');
     }
 
@@ -67,8 +106,8 @@ class RuleController extends Controller
     public function update(Request $request, Rule $rule)
     {
         $attributes = $request->validate([
-            'pills' => 'required',
-            'days_of_week' => 'required',
+            'pills' => 'required|integer|min:1|max:5',
+            'days_of_week' => 'required|array|min:1|max:7',
             'time' => 'required|date_format:H:i',
         ]);
     
@@ -102,6 +141,8 @@ class RuleController extends Controller
                 ]);
             }
         }
+
+        // $this->updateShadow();
     
         return redirect()->route('rules.index');
     }
@@ -116,6 +157,8 @@ class RuleController extends Controller
         });
     
         $rule->delete();
+
+        $this->updateShadow();
     
         return redirect()->route('rules.index');
     }
