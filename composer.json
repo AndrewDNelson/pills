@@ -9,10 +9,12 @@
         "aws/aws-sdk-php": "^3.293",
         "aws/aws-sdk-php-laravel": "^3.8",
         "guzzlehttp/guzzle": "^7.2",
+        "laravel-frontend-presets/tall": "^7.0",
         "laravel/framework": "^10.9",
         "laravel/sanctum": "^3.2",
         "laravel/tinker": "^2.8",
-        "laravel/vapor-core": "^2.30"
+        "laravel/vapor-core": "^2.30",
+        "livewire/livewire": "^3.2"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
