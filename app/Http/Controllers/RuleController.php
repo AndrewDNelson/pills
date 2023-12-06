@@ -43,14 +43,10 @@ class RuleController extends Controller
             ],
         ];
 
-        try {
-            $result = $iotDataPlaneClient->updateThingShadow([
-                'thingName'  => 'PillThing',
-                'payload' => json_encode(['state' => $state]),
-            ]);
-        } catch (AwsException $e) {
-            ray($e->getMessage());
-        }
+        $result = $iotDataPlaneClient->updateThingShadow([
+            'thingName'  => 'PillThing',
+            'payload' => json_encode(['state' => $state]),
+        ]);
 
         // The result contains the new state of the thing shadow
         // $newState = json_decode($result->get('payload'));
