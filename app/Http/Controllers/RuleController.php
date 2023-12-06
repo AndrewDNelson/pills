@@ -31,14 +31,16 @@ class RuleController extends Controller
     {
 
         $attributes = $request->validate([
-            'pills' => 'required|integer|min:0|max:255',
-            'days_of_week' => 'required|json',
+            'pills' => 'required|integer|min:0|max:5',
+            'days_of_week' => 'required|array|min:1|max:7',
             'time' => 'required|date_format:H:i',
         ]);
 
+        $attributes['days_of_week'] = json_encode($attributes['days_of_week']);
+
         $rule = Rule::create($attributes);
 
-        $daysOfWeek = json_decode($request->days_of_week);
+        $daysOfWeek = json_decode($attributes['days_of_week']);
 
         foreach ($daysOfWeek as $day) {
             Schedule::create([
@@ -49,14 +51,6 @@ class RuleController extends Controller
         }
 
         return redirect()->route('rules.index');
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Rule $rule)
-    {
-        return view('rules.show', compact('rule'));
     }
 
     /**
@@ -72,7 +66,44 @@ class RuleController extends Controller
      */
     public function update(Request $request, Rule $rule)
     {
-        //
+        $attributes = $request->validate([
+            'pills' => 'required',
+            'days_of_week' => 'required',
+            'time' => 'required|date_format:H:i',
+        ]);
+    
+        $attributes['days_of_week'] = json_encode($attributes['days_of_week']);
+    
+        $rule->update($attributes);
+
+        $currentDays = $rule->schedules->pluck('day')->toArray();
+        $newDays = json_decode($attributes['days_of_week']);
+
+        // Delete Schedules for days that are no longer present
+        foreach ($currentDays as $day) {
+            if (!in_array($day, $newDays)) {
+                $rule->schedules()->where('day', $day)->delete();
+            }
+        }
+
+        // Update or create Schedules for new days
+        foreach ($newDays as $day) {
+            $schedule = $rule->schedules()->where('day', $day)->first();
+
+            if ($schedule) {
+                // Update the existing schedule
+                $schedule->update(['time' => $rule->time]);
+            } else {
+                // Create a new schedule
+                Schedule::create([
+                    'rule_id' => $rule->id,
+                    'day' => $day,
+                    'time' => $rule->time,
+                ]);
+            }
+        }
+    
+        return redirect()->route('rules.index');
     }
 
     /**

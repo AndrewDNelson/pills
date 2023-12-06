@@ -18,7 +18,7 @@
                         <div class="flex justify-between items-center mb-4 p-4 bg-white shadow rounded-lg">
                             <div>
                                 <div class="flex items-end gap-3">
-                                    <p class="text-3xl font-medium text-black">{{ $rule->time }}</p>
+                                    <p class="text-3xl font-medium text-black">{{ date("g:i A", strtotime($rule->time)) }}</p>
                                     <p class="text-medium text-sky-500">{{ $rule->pills }} pills</p>
                                 </div>
                                 
@@ -37,7 +37,7 @@
                                             this.closest('form').submit();">Delete</button>
                                 </form>
 
-                                <x-secondary-link route="rules.show" :itemId="$rule">
+                                <x-secondary-link route="rules.edit" :itemId="$rule">
                                     Update
                                 </x-secondary-link>
 

@@ -10,6 +10,17 @@ class Schedule extends Model
 {
     use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'rule_id',
+        'day',
+        'time',
+    ];
+
     public function rule(): BelongsTo
     {
         return $this->belongsTo(Rule::class);

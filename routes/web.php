@@ -19,5 +19,4 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::resource('/rules', RuleController::class);
-Route::resource('/schedules', ScheduleController::class);
+Route::resource('/rules', RuleController::class)->except(['show']);
