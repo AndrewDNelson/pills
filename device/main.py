@@ -4,6 +4,8 @@ import ujson
 import machine
 import network
 import ntptime
+from I2C_LCD import I2cLcd
+from stepmotor import mystepmotor
 from umqtt.simple import MQTTClient
 
 #Enter your wifi SSID and password below.
@@ -134,7 +136,7 @@ def led_state(message):
     led.value(message['led']['onboard'])
         
 
-    
+
 
 #We use our helper function to connect to AWS IoT Core.
 #The callback function mqtt_subscribe is what will be called if we 
@@ -154,6 +156,27 @@ except:
     print("Unable to connect to MQTT.")
 
 
+# Buzzer setup
+activeBuzzer=machine.Pin(4, machine.Pin.OUT)
+activeBuzzer.value(0)
+
+button = machine.Pin(14, machine.Pin.IN, machine.Pin.PULL_UP)
+
+i2c = machine.I2C(scl=machine.Pin(18), sda=machine.Pin(19), freq=400000)
+devices = i2c.scan()
+if len(devices) == 0:
+    print("No i2c device !")
+else:
+    for device in devices:
+        print("I2C addr: "+hex(device))
+        lcd = I2cLcd(i2c, device, 2, 16)
+
+lcd.clear()
+lcd.backlight_off()
+lcd.display_off()
+
+stepper = mystepmotor(26, 25, 33, 32)
+
 while True:
 
     # ----------------- DISPENSER STUFF -----------------
@@ -169,11 +192,42 @@ while True:
             print(f"It's time for {x['pillCount']} pill(s) as per schedule ID {x['id']}")
 
             # dispense amount of pills
-            # beep
-            # wait for user to press button
-            # upload dose to AWS
+            for i in range(0, x['pillCount']):
+                stepper.moveAround(0, 1, 2000)
 
-            doses.enqueue({'time':get_time(), 'schedule_id': x['id']})
+            lcd.backlight_on()
+            lcd.display_on()
+            lcd.move_to(0, 0)
+            lcd.putstr(f"Time to take your {x['pillCount']} pills!")
+
+            for i in range(0,4):
+                activeBuzzer.value(1)
+                time.sleep_ms(50)
+                activeBuzzer.value(0)
+                time.sleep_ms(50)
+                activeBuzzer.value(1)
+                time.sleep_ms(50)
+                activeBuzzer.value(0)
+                time.sleep_ms(200)
+
+            while True:
+                if not button.value():
+                    time.sleep_ms(20)
+                    if not button.value():
+
+                        doses.enqueue({'time':get_time(), 'schedule_id': x['id']})
+
+                        while not button.value():
+                            time.sleep_ms(20)
+
+                        break
+
+            activeBuzzer.value(1)
+            time.sleep_ms(50)
+            activeBuzzer.value(0)
+            lcd.backlight_off()
+            lcd.display_off()
+            lcd.clear()
 
 
     # ----------------- MQTT STUFF -----------------
