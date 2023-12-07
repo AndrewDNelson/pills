@@ -40,17 +40,45 @@ lwt_pub = "$aws/things/" + thing_name + "/status"
 led = machine.Pin(2, machine.Pin.OUT)
 info = os.uname()
 
-#Connect to the wireless network
+# ----------------- HARDWARE STUFF -----------------
+activeBuzzer=machine.Pin(4, machine.Pin.OUT)
+activeBuzzer.value(0)
+
+button = machine.Pin(14, machine.Pin.IN, machine.Pin.PULL_UP)
+
+i2c = machine.I2C(scl=machine.Pin(18), sda=machine.Pin(19), freq=400000)
+devices = i2c.scan()
+if len(devices) == 0:
+    print("No i2c device !")
+else:
+    for device in devices:
+        print("I2C addr: "+hex(device))
+        lcd = I2cLcd(i2c, device, 2, 16)
+
+lcd.clear()
+lcd.backlight_on()
+lcd.display_on()
+
+stepper = mystepmotor(26, 25, 33, 32)
+
+# ----------------- WIFI CONNECTION -----------------
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
 if not wlan.isconnected():
     print('Connecting to network...')
+    lcd.clear()
+    lcd.move_to(0, 0)
+    lcd.putstr("Connecting to network...")
+
     wlan.connect(wifi_ssid, wifi_password)
     while not wlan.isconnected():
         pass
 
     print('Connection successful')
     print('Network config:', wlan.ifconfig())
+    lcd.clear()
+    lcd.move_to(0, 0)
+    lcd.putstr("Connection successful")
 
 # Set system time using NTP
 ntptime.settime()
@@ -104,7 +132,7 @@ class LimitedQueue:
 doses = LimitedQueue()
 
 def mqtt_connect(client=client_id, endpoint=aws_endpoint, sslp=ssl_params):
-    mqtt = MQTTClient(client_id=client, server=endpoint, port=8883, keepalive=1200, ssl=True, ssl_params=sslp)
+    mqtt = MQTTClient(client_id=client, server=endpoint, port=8883, keepalive=300, ssl=True, ssl_params=sslp)
     mqtt.set_last_will(lwt_pub, ujson.dumps({"status": "disconnected"}))
     print("Connecting to AWS IoT...")
     mqtt.connect()
@@ -137,10 +165,12 @@ def led_state(message):
         
 
 
-
-#We use our helper function to connect to AWS IoT Core.
-#The callback function mqtt_subscribe is what will be called if we 
-#get a new message on topic_sub.
+lcd.clear()
+lcd.move_to(0, 0)
+lcd.putstr("Connecting to AWS IoT Core")
+# We use our helper function to connect to AWS IoT Core.
+# The callback function mqtt_subscribe is what will be called if we 
+# get a new message on topic_sub.
 try:
     mqtt = mqtt_connect()
     mqtt.set_callback(mqtt_subscribe)
@@ -151,31 +181,21 @@ try:
         mqtt_publish(client=mqtt, topic=lwt_pub, message=connected_msg)
     except:
         print("Unable to publish message.")
+    
+    lcd.clear()
+    lcd.move_to(0, 0)
+    lcd.putstr("Connected to AWS IoT Core")
         
 except:
     print("Unable to connect to MQTT.")
+    lcd.clear()
+    lcd.move_to(0, 0)
+    lcd.putstr("Unable to connect to MQTT.")
 
-
-# Buzzer setup
-activeBuzzer=machine.Pin(4, machine.Pin.OUT)
-activeBuzzer.value(0)
-
-button = machine.Pin(14, machine.Pin.IN, machine.Pin.PULL_UP)
-
-i2c = machine.I2C(scl=machine.Pin(18), sda=machine.Pin(19), freq=400000)
-devices = i2c.scan()
-if len(devices) == 0:
-    print("No i2c device !")
-else:
-    for device in devices:
-        print("I2C addr: "+hex(device))
-        lcd = I2cLcd(i2c, device, 2, 16)
-
+time.sleep(2)
 lcd.clear()
 lcd.backlight_off()
 lcd.display_off()
-
-stepper = mystepmotor(26, 25, 33, 32)
 
 while True:
 
@@ -228,6 +248,7 @@ while True:
             lcd.backlight_off()
             lcd.display_off()
             lcd.clear()
+            time.sleep(60)
 
 
     # ----------------- MQTT STUFF -----------------
