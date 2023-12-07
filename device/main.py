@@ -207,7 +207,7 @@ while True:
 
             # dispense amount of pills
             for i in range(0, x['pillCount']):
-                stepper.moveAround(0, 1, 2000)
+                stepper.moveAround(1, 1, 2000)
 
             lcd.backlight_on()
             lcd.display_on()
