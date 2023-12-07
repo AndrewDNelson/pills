@@ -81,7 +81,25 @@ def get_day_of_week(year, month, day):
 
 # dispenser stuff
 schedule = []
-doses = [{'time':get_time(), 'schedule_id': 11}]
+
+class LimitedQueue:
+    def __init__(self, limit=5):
+        self.queue = []
+        self.limit = limit
+
+    def enqueue(self, item):
+        self.queue.append(item)
+        if len(self.queue) > self.limit:
+            self.dequeue()
+
+    def dequeue(self):
+        if self.queue:
+            return self.queue.pop(0)
+
+    def get_queue(self):
+        return self.queue
+
+doses = LimitedQueue()
 
 def mqtt_connect(client=client_id, endpoint=aws_endpoint, sslp=ssl_params):
     mqtt = MQTTClient(client_id=client, server=endpoint, port=8883, keepalive=1200, ssl=True, ssl_params=sslp)
@@ -155,7 +173,7 @@ while True:
             # wait for user to press button
             # upload dose to AWS
 
-            doses.append({'time':get_time(), 'schedule_id': x['id']})
+            doses.enqueue({'time':get_time(), 'schedule_id': x['id']})
 
 
     # ----------------- MQTT STUFF -----------------
@@ -179,7 +197,7 @@ while True:
                     "onboard": led.value()
                 },
                 "schedule": schedule,
-                "doses": doses
+                "doses": doses.get_queue()
             }
         }
     })

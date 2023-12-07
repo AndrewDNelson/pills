@@ -18,12 +18,12 @@ class RefillController extends Controller
 
         if ($latestRefill) {
             $pillCount = $latestRefill->pills;
-            $doses = Dose::where('created_at', '>', $latestRefill->created_at)->get();
+            $doses = Dose::where('time', '>', $latestRefill->created_at)->get();
 
             foreach ($doses as $dose) {
                 $pillCount -= $dose->schedule->rule->pills;
             }
-            
+
             return view('refills.index', ['pills' => $pillCount]);
         } else {
             return view('refills.index', ['pills' => 0]);
