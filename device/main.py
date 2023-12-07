@@ -44,34 +44,18 @@ activeBuzzer.value(0)
 
 button = machine.Pin(14, machine.Pin.IN, machine.Pin.PULL_UP)
 
-class LcdController:
-    def __init__(self, scl_pin, sda_pin, freq=400000):
-        self.i2c = machine.I2C(scl=machine.Pin(scl_pin), sda=machine.Pin(sda_pin), freq=freq)
-        self.lcd = None
-        self.init_lcd()
-        
-    def init_lcd(self):
-        devices = self.i2c.scan()
-        if len(devices) == 0:
-            print("No i2c device !")
-        else:
-            self.lcd = I2cLcd(self.i2c, devices[0], 2, 16)
+i2c = machine.I2C(scl=machine.Pin(18), sda=machine.Pin(19), freq=400000)
+devices = i2c.scan()
+if len(devices) == 0:
+    print("No i2c device !")
+else:
+    for device in devices:
+        print("I2C addr: "+hex(device))
+        lcd = I2cLcd(i2c, device, 2, 16)
 
-    def message(self, message):
-        if self.lcd is not None:
-            self.lcd.clear()
-            self.lcd.backlight_on()
-            self.lcd.display_on()
-            self.lcd.move_to(0, 0)
-            self.lcd.putstr(message)
-
-    def clear(self):
-        if self.lcd is not None:
-            self.lcd.clear()
-            self.lcd.backlight_off()
-            self.lcd.display_off()
-
-lcd = LcdController(18, 19)
+lcd.clear()
+lcd.backlight_on()
+lcd.display_on()
 
 stepper = mystepmotor(26, 25, 33, 32)
 
@@ -80,7 +64,9 @@ wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
 if not wlan.isconnected():
     print('Connecting to network...')
-    lcd.message("Connecting to network...")
+    lcd.clear()
+    lcd.move_to(0, 0)
+    lcd.putstr("Connecting to network...")
 
     wlan.connect(wifi_ssid, wifi_password)
     while not wlan.isconnected():
@@ -88,7 +74,9 @@ if not wlan.isconnected():
 
     print('Connection successful')
     print('Network config:', wlan.ifconfig())
-    lcd.message("Connection successful")
+    lcd.clear()
+    lcd.move_to(0, 0)
+    lcd.putstr("Connection successful")
 
 # Set system time using NTP
 ntptime.settime()
@@ -170,7 +158,10 @@ def mqtt_subscribe(topic, msg):
 def led_state(message):
     led.value(message['led']['onboard'])
 
-lcd.message("Connecting to AWS IoT Core")
+
+lcd.clear()
+lcd.move_to(0, 0)
+lcd.putstr("Connecting to AWS IoT Core")
 # We use our helper function to connect to AWS IoT Core.
 # The callback function mqtt_subscribe is what will be called if we 
 # get a new message on topic_sub.
@@ -185,14 +176,20 @@ try:
     except:
         print("Unable to publish message.")
     
-    lcd.message("Connected to AWS IoT Core")
+    lcd.clear()
+    lcd.move_to(0, 0)
+    lcd.putstr("Connected to AWS IoT Core")
         
 except:
     print("Unable to connect to MQTT.")
-    lcd.message("Unable to connect to MQTT.")
+    lcd.clear()
+    lcd.move_to(0, 0)
+    lcd.putstr("Unable to connect to MQTT.")
 
 time.sleep(2)
 lcd.clear()
+lcd.backlight_off()
+lcd.display_off()
 
 while True:
 
@@ -212,7 +209,10 @@ while True:
             for i in range(0, x['pillCount']):
                 stepper.moveAround(0, 1, 2000)
 
-            lcd.message(f"Time to take your {x['pillCount']} pills!")
+            lcd.backlight_on()
+            lcd.display_on()
+            lcd.move_to(0, 0)
+            lcd.putstr(f"Time to take your {x['pillCount']} pills!")
 
             for i in range(0,4):
                 activeBuzzer.value(1)
@@ -239,6 +239,8 @@ while True:
             activeBuzzer.value(1)
             time.sleep_ms(50)
             activeBuzzer.value(0)
+            lcd.backlight_off()
+            lcd.display_off()
             lcd.clear()
             time.sleep(60)
 
