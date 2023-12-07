@@ -3,6 +3,10 @@
 namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+
+use App\Models\Refill;
+use App\Models\Rule;
+use App\Models\Schedule;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -12,15 +16,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // \App\Models\User::factory(10)->create();
-
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
-
-        \App\Models\Rule::factory(10)->create()->each(function ($rule) {
-            $rule->schedules()->saveMany(\App\Models\Schedule::factory(3)->make());
-        });
+        Rule::factory(1)->has(Schedule::factory(3))->create();
+        Refill::factory()->create();
     }
 }

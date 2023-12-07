@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DoseController;
+use App\Http\Controllers\RefillController;
 use App\Http\Controllers\RuleController;
 use App\Http\Controllers\ScheduleController;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +22,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::resource('/rules', RuleController::class)->except(['show']);
+Route::resource('/refill', RefillController::class)->except(['show', 'edit', 'update', 'destroy']);
 
 Route::get('/doses', [DoseController::class, 'index'])->name('doses.index');
 Route::get('/doses/update', [DoseController::class, 'update'])->name('doses.update');

@@ -36,6 +36,7 @@ class DoseController extends Controller
             if (!Dose::where('time', $dose->time)->get()->count() > 0) {
                 $newDose = new Dose();
                 $newDose->time = $dose->time;
+                $newDose->schedule_id = $dose->schedule_id;
                 $newDose->save();
             }
         }

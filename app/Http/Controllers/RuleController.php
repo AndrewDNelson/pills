@@ -20,7 +20,8 @@ class RuleController extends Controller
             return [
                 'day' => $schedule->day,
                 'time' => $schedule->time,
-                'pillCount' => $schedule->rule->pills
+                'pillCount' => $schedule->rule->pills,
+                'id' => $schedule->id,
             ];
         })->toArray();
 
