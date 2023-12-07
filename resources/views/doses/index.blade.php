@@ -22,7 +22,7 @@
                     </x-primary-link>
                 </div>
                 <div class="">
-                    @foreach ($doses->sortBy('time') as $dose)
+                    @foreach ($doses as $dose)
                         <div class="flex justify-between items-center mb-4 p-4 bg-white shadow rounded-lg">
                             <div>
                                 <div class="flex items-end gap-3">

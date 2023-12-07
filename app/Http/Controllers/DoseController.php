@@ -47,7 +47,7 @@ class DoseController extends Controller
      */
     public function index()
     {
-        return view('doses.index', ['doses' => Dose::all()]); 
+        return view('doses.index', ['doses' => Dose::orderBy('time', 'desc')->get()]); 
     }
 
     /**
