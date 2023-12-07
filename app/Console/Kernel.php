@@ -46,28 +46,7 @@ class Kernel extends ConsoleKernel
                 }
             }
 
-            $latestRefill = Refill::latest()->first();
-
-            if ($latestRefill) {
-                $pillCount = $latestRefill->pills;
-                $doses = Dose::where('time', '>', $latestRefill->created_at)->get();
-
-                foreach ($doses as $dose) {
-                    $pillCount -= $dose->schedule->rule->pills;
-                }
-
-                $pills = $pillCount;
-            } else {
-                $pills = 0;
-            }
-
-            if ($pills < 1) {
-                // Notify that it needs to be refilled
-            } elseif ($pills < 10) {
-                // Notify that it is low
-            } 
-
-        })->everyFiveMinutes();
+        })->everyMinute();
     }
 
     /**

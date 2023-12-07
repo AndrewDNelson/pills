@@ -8,13 +8,13 @@ from I2C_LCD import I2cLcd
 from stepmotor import mystepmotor
 from umqtt.simple import MQTTClient
 
-#Enter your wifi SSID and password below.
+# Enter your wifi SSID and password below.
 wifi_ssid = "TWU"
 wifi_password = ""
 
-#Enter your AWS IoT endpoint. You can find it in the Settings page of
-#your AWS IoT Core console. 
-#https://docs.aws.amazon.com/iot/latest/developerguide/iot-connect-devices.html 
+# Enter your AWS IoT endpoint. You can find it in the Settings page of
+# your AWS IoT Core console. 
+# https://docs.aws.amazon.com/iot/latest/developerguide/iot-connect-devices.html 
 aws_endpoint = b'a3g64zddycx1fg-ats.iot.us-west-2.amazonaws.com'
 
 thing_name = "PillThing"
@@ -22,25 +22,23 @@ client_id = "PillClient"
 private_key = "private.pem.key"
 private_cert = "cert.pem.crt"
 
-#Read the files used to authenticate to AWS IoT Core
+# Read the files used to authenticate to AWS IoT Core
 with open(private_key, 'r') as f:
     key = f.read()
 with open(private_cert, 'r') as f:
     cert = f.read()
 
-#These are the topics we will subscribe to. We will publish updates to /update.
-#We will subscribe to the /update/delta topic to look for changes in the device shadow.
+# These are the topics we will subscribe to. We will publish updates to /update.
+# We will subscribe to the /update/delta topic to look for changes in the device shadow.
 topic_pub = "$aws/things/" + thing_name + "/shadow/update"
 topic_sub = "$aws/things/" + thing_name + "/shadow/update/delta"
 ssl_params = {"key":key, "cert":cert, "server_side":False}
 lwt_pub = "$aws/things/" + thing_name + "/status"
 
-#Define pins for LED.
-#The LED is built into the board, and no external connections are required.
+# ----------------- HARDWARE STUFF -----------------
 led = machine.Pin(2, machine.Pin.OUT)
 info = os.uname()
 
-# ----------------- HARDWARE STUFF -----------------
 activeBuzzer=machine.Pin(4, machine.Pin.OUT)
 activeBuzzer.value(0)
 
@@ -108,10 +106,6 @@ def get_day_of_week(year, month, day):
     days = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
     return days[day_of_week]
 
-
-# dispenser stuff
-schedule = []
-
 class LimitedQueue:
     def __init__(self, limit=5):
         self.queue = []
@@ -129,7 +123,9 @@ class LimitedQueue:
     def get_queue(self):
         return self.queue
 
+# ----------------- MQTT CONNECTION -----------------
 doses = LimitedQueue()
+schedule = []
 
 def mqtt_connect(client=client_id, endpoint=aws_endpoint, sslp=ssl_params):
     mqtt = MQTTClient(client_id=client, server=endpoint, port=8883, keepalive=300, ssl=True, ssl_params=sslp)
@@ -159,10 +155,8 @@ def mqtt_subscribe(topic, msg):
         
     print("Done")
 
-
 def led_state(message):
     led.value(message['led']['onboard'])
-        
 
 
 lcd.clear()
@@ -251,8 +245,8 @@ while True:
             time.sleep(60)
 
 
-    # ----------------- MQTT STUFF -----------------
-    #Check for messages.
+    # ----------------- MQTT STUFF LOOP-----------------
+    # Check for messages.
     try:
         mqtt.check_msg()
     except:
@@ -277,13 +271,13 @@ while True:
         }
     })
     
-    #Using the message above, the device shadow is updated.
+    # Using the message above, the device shadow is updated.
     try:
         mqtt_publish(client=mqtt, message=mesg)
     except:
         print("Unable to publish message.")
         
 
-    #Wait for 10 seconds before checking for messages and publishing a new update.
+    # Wait for 10 seconds before checking for messages and publishing a new update, reducing power and cpu usage.
     print("Sleep for 10 seconds")
     time.sleep(10)

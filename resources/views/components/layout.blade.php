@@ -23,6 +23,7 @@
         <div class="min-h-screen bg-gray-100">
     
             <x-navigation />
+            <x-alert />
             <!-- Page Heading -->
             @if (isset($header))
                 <header class="bg-white shadow">
