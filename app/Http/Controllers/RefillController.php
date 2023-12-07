@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Dose;
 use App\Models\Refill;
+use Exception;
 use Illuminate\Http\Request;
 
 class RefillController extends Controller
@@ -14,18 +15,19 @@ class RefillController extends Controller
     public function index()
     {
         $latestRefill = Refill::latest()->first();
-        $pillCount = $latestRefill->pills;
-        $doses = Dose::where('created_at', '>', $latestRefill->created_at)->get();
 
-        try {
+        if ($latestRefill) {
+            $pillCount = $latestRefill->pills;
+            $doses = Dose::where('created_at', '>', $latestRefill->created_at)->get();
+
             foreach ($doses as $dose) {
                 $pillCount -= $dose->schedule->rule->pills;
             }
-        } catch (\Throwable $th) {
-            //throw $th;
+            
+            return view('refills.index', ['pills' => $pillCount]);
+        } else {
+            return view('refills.index', ['pills' => 0]);
         }
-
-        return view('refills.index', ['pills' => $pillCount]);
     }
 
     /**

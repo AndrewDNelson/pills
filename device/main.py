@@ -67,6 +67,18 @@ def get_time():
     
     return formatted_time
 
+def get_day_of_week(year, month, day):
+    if month < 3:
+        month += 12
+        year -= 1
+    k = year % 100
+    j = year // 100
+    f = day + ((13 * (month + 1)) // 5) + k + (k // 4) + (j // 4) - 2 * j
+    day_of_week = f % 7
+    days = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    return days[day_of_week]
+
+
 # dispenser stuff
 schedule = []
 doses = [{'time':get_time(), 'schedule_id': 11}]
@@ -125,8 +137,28 @@ except:
 
 
 while True:
-    print(get_time())
-    
+
+    # ----------------- DISPENSER STUFF -----------------
+    current_time_str = get_time()
+    year, month, day = map(int, current_time_str[:10].split('-'))
+    current_day = get_day_of_week(year, month, day)
+    current_hour_minute = current_time_str[11:16]  # Extract HH:MM
+
+    # Compare with schedule
+    for x in schedule:
+        schedule_time = x['time'][:5]  # Extract HH:MM from the schedule time
+        if x['day'] == current_day and schedule_time == current_hour_minute:
+            print(f"It's time for {x['pillCount']} pill(s) as per schedule ID {x['id']}")
+
+            # dispense amount of pills
+            # beep
+            # wait for user to press button
+            # upload dose to AWS
+
+            doses.append({'time':get_time(), 'schedule_id': x['id']})
+
+
+    # ----------------- MQTT STUFF -----------------
     #Check for messages.
     try:
         mqtt.check_msg()
