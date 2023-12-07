@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Dose;
 use App\Models\Refill;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -16,9 +17,12 @@ class RefillController extends Controller
     {
         $latestRefill = Refill::latest()->first();
 
+        // Convert 'created_at' from UTC to PST
+        $refillTimeInPST = Carbon::parse($latestRefill->created_at)->setTimezone('America/Los_Angeles');
+
         if ($latestRefill) {
             $pillCount = $latestRefill->pills;
-            $doses = Dose::where('time', '>', $latestRefill->created_at)->get();
+            $doses = Dose::where('time', '>', $refillTimeInPST)->get();
 
             foreach ($doses as $dose) {
                 $pillCount -= $dose->schedule->rule->pills;
