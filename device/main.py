@@ -50,12 +50,24 @@ if len(devices) == 0:
     print("No i2c device !")
 else:
     for device in devices:
-        print("I2C addr: "+hex(device))
         lcd = I2cLcd(i2c, device, 2, 16)
 
-lcd.clear()
-lcd.backlight_on()
-lcd.display_on()
+def lcd_clear():
+    if 'lcd' in globals():
+        global lcd
+        lcd.clear()
+        lcd.backlight_off()
+        lcd.display_off()
+
+def lcd_message(message):
+    if 'lcd' in globals():
+        global lcd
+        lcd.clear()
+        lcd.backlight_on()
+        lcd.display_on()
+        lcd.move_to(0, 0)
+        lcd.putstr(message)
+
 
 stepper = mystepmotor(26, 25, 33, 32)
 
@@ -64,9 +76,7 @@ wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
 if not wlan.isconnected():
     print('Connecting to network...')
-    lcd.clear()
-    lcd.move_to(0, 0)
-    lcd.putstr("Connecting to network...")
+    lcd_message("Connecting to network...")
 
     wlan.connect(wifi_ssid, wifi_password)
     while not wlan.isconnected():
@@ -74,9 +84,7 @@ if not wlan.isconnected():
 
     print('Connection successful')
     print('Network config:', wlan.ifconfig())
-    lcd.clear()
-    lcd.move_to(0, 0)
-    lcd.putstr("Connection successful")
+    lcd_message("Connection successful")
 
 # Set system time using NTP
 ntptime.settime()
@@ -159,9 +167,7 @@ def led_state(message):
     led.value(message['led']['onboard'])
 
 
-lcd.clear()
-lcd.move_to(0, 0)
-lcd.putstr("Connecting to AWS IoT Core")
+lcd_message("Connecting to AWS IoT Core")
 # We use our helper function to connect to AWS IoT Core.
 # The callback function mqtt_subscribe is what will be called if we 
 # get a new message on topic_sub.
@@ -176,20 +182,14 @@ try:
     except:
         print("Unable to publish message.")
     
-    lcd.clear()
-    lcd.move_to(0, 0)
-    lcd.putstr("Connected to AWS IoT Core")
+    lcd_message("Connected to AWS IoT Core")
         
 except:
     print("Unable to connect to MQTT.")
-    lcd.clear()
-    lcd.move_to(0, 0)
-    lcd.putstr("Unable to connect to MQTT.")
+    lcd_message("Unable to connect to MQTT.")
 
 time.sleep(2)
-lcd.clear()
-lcd.backlight_off()
-lcd.display_off()
+lcd_clear()
 
 while True:
 
@@ -209,11 +209,7 @@ while True:
             for i in range(0, x['pillCount']):
                 stepper.moveAround(1, 1, 2000)
 
-            lcd.backlight_on()
-            lcd.display_on()
-            lcd.move_to(0, 0)
-            lcd.putstr(f"Time to take your {x['pillCount']} pills!")
-
+            lcd_message(f"Time to take your {x['pillCount']} pills!")
             for i in range(0,4):
                 activeBuzzer.value(1)
                 time.sleep_ms(50)
@@ -239,9 +235,7 @@ while True:
             activeBuzzer.value(1)
             time.sleep_ms(50)
             activeBuzzer.value(0)
-            lcd.backlight_off()
-            lcd.display_off()
-            lcd.clear()
+            lcd_clear()
             time.sleep(60)
 
 
