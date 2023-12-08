@@ -44,7 +44,7 @@ activeBuzzer.value(0)
 
 button = machine.Pin(14, machine.Pin.IN, machine.Pin.PULL_UP)
 
-i2c = machine.I2C(scl=machine.Pin(18), sda=machine.Pin(19), freq=400000)
+i2c = machine.I2C(scl=machine.Pin(19), sda=machine.Pin(18), freq=400000)
 devices = i2c.scan()
 if len(devices) == 0:
     print("No i2c device !")
@@ -69,14 +69,14 @@ def lcd_message(message):
         lcd.putstr(message)
 
 
-stepper = mystepmotor(26, 25, 33, 32)
+stepper = mystepmotor(32, 33, 25, 26)
 
 # ----------------- WIFI CONNECTION -----------------
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
 if not wlan.isconnected():
     print('Connecting to network...')
-    lcd_message("Connecting to network...")
+    lcd_message("Connecting to   network...")
 
     wlan.connect(wifi_ssid, wifi_password)
     while not wlan.isconnected():
@@ -167,7 +167,7 @@ def led_state(message):
     led.value(message['led']['onboard'])
 
 
-lcd_message("Connecting to AWS IoT Core")
+lcd_message("Connecting to   AWS IoT Core")
 # We use our helper function to connect to AWS IoT Core.
 # The callback function mqtt_subscribe is what will be called if we 
 # get a new message on topic_sub.
@@ -182,7 +182,7 @@ try:
     except:
         print("Unable to publish message.")
     
-    lcd_message("Connected to AWS IoT Core")
+    lcd_message("Connected to AWSIoT Core")
         
 except:
     print("Unable to connect to MQTT.")
@@ -209,7 +209,7 @@ while True:
             for i in range(0, x['pillCount']):
                 stepper.moveAround(1, 1, 2000)
 
-            lcd_message(f"Time to take your {x['pillCount']} pills!")
+            lcd_message(f"Time to take    your {x['pillCount']} pills!")
             for i in range(0,4):
                 activeBuzzer.value(1)
                 time.sleep_ms(50)
@@ -226,7 +226,31 @@ while True:
                     if not button.value():
 
                         doses.enqueue({'time':get_time(), 'schedule_id': x['id']})
-
+                        # Update state to message
+                        mesg = ujson.dumps({
+                            "state":{
+                                "reported": {
+                                    "device": {
+                                        "client": client_id,
+                                        "uptime": time.ticks_ms(),
+                                        "hardware": info[0],
+                                        "firmware": info[2]
+                                    },
+                                    "led": {
+                                        "onboard": led.value()
+                                    },
+                                    "schedule": schedule,
+                                    "doses": doses.get_queue()
+                                }
+                            }
+                        })
+                        
+                        # Using the message above, the device shadow is updated.
+                        try:
+                            mqtt_publish(client=mqtt, message=mesg)
+                        except:
+                            print("Unable to publish message.")
+                            
                         while not button.value():
                             time.sleep_ms(20)
 
