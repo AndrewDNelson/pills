@@ -5,6 +5,7 @@ namespace App\View\Components;
 use App\Models\Dose;
 use App\Models\Refill;
 use Closure;
+use Exception;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 
@@ -25,9 +26,14 @@ class Alert extends Component
             $pillCount = $latestRefill->pills;
             $doses = Dose::where('time', '>', $latestRefill->created_at)->get();
 
-            foreach ($doses as $dose) {
-                $pillCount -= $dose->schedule->rule->pills;
+            try {
+                foreach ($doses as $dose) {
+                    $pillCount -= $dose->schedule->rule->pills;
+                }
+            } catch (Exception $e) {
+                // Do nothing
             }
+            
 
             $pills = $pillCount;
         } else {

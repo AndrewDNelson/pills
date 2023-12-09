@@ -24,8 +24,12 @@ class RefillController extends Controller
             $pillCount = $latestRefill->pills;
             $doses = Dose::where('time', '>', $refillTimeInPST)->get();
 
-            foreach ($doses as $dose) {
-                $pillCount -= $dose->schedule->rule->pills;
+            try {
+                foreach ($doses as $dose) {
+                    $pillCount -= $dose->schedule->rule->pills;
+                }
+            } catch (Exception $e) {
+                // Do nothing
             }
 
             return view('refills.index', ['pills' => $pillCount]);
